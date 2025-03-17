@@ -2,16 +2,17 @@ const Tesseract = require("tesseract.js");
 const formidable = require("formidable");
 
 module.exports = async (req, res) => {
-  // CORS Headers to allow access from any domain (can be restricted later)
-  res.setHeader("Access-Control-Allow-Origin", "*"); // Or replace "*" with your frontend domain
+  // Set CORS headers to allow requests from any domain (you can restrict this later if needed)
+  res.setHeader("Access-Control-Allow-Origin", "https://role2-fu9l.vercel.app/"); // Replace "*" with your frontend domain if you want to restrict access
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // Handle OPTIONS requests (pre-flight request for CORS)
+  // Handle OPTIONS requests for CORS pre-flight check
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
+  // Only allow POST requests for file upload
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -47,4 +48,3 @@ module.exports = async (req, res) => {
     }
   });
 };
-
