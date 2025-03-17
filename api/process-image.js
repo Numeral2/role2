@@ -1,0 +1,39 @@
+const formidable = require("formidable");
+const Tesseract = require("tesseract.js");
+
+module.exports = async (req, res) => {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  const form = new formidable.IncomingForm();
+  form.uploadDir = "/tmp"; // Vercel only allows writing to /tmp
+  form.keepExtensions = true;
+
+  form.parse(req, async (err, fields, files) => {
+    if (err) {
+      console.error("Form parsing error:", err);
+      return res.status(500).json({ error: "Failed to process form" });
+    }
+
+    const filesArray = Object.values(files);
+    if (filesArray.length === 0) {
+      return res.status(400).json({ error: "No files uploaded" });
+    }
+
+    try {
+      let extractedText = "";
+      for (const file of filesArray) {
+        const result = await Tesseract.recognize(file.path, "eng", {
+          logger: (m) => console.log(m),
+        });
+        extractedText += result.data.text + "\n\n";
+      }
+
+      return res.json({ extracted_text: extractedText });
+    } catch (err) {
+      console.error("OCR processing error:", err);
+      return res.status(500).json({ error: "Error processing files" });
+    }
+  });
+};
