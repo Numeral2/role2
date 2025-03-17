@@ -2,8 +2,8 @@ const Tesseract = require("tesseract.js");
 const formidable = require("formidable");
 
 module.exports = async (req, res) => {
-  // CORS Headers
-  res.setHeader("Access-Control-Allow-Origin", "*"); // You can replace "*" with the specific frontend URL for security
+  // CORS Headers to allow access from any domain (can be restricted later)
+  res.setHeader("Access-Control-Allow-Origin", "*"); // Or replace "*" with your frontend domain
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
