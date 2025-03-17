@@ -10,20 +10,20 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: "No text provided" });
   }
 
-  const makeUrl = "https://hook.eu2.make.com/y94u5xvkf97g5nym3trgz2j2107nuu12";
+  const makeUrl = "https://hook.eu2.make.com/y94u5xvkf97g5nym3trgz2j2107nuu12"; // Replace with your Make.com URL
 
   try {
     const response = await axios.post(makeUrl, { text });
 
-    // Log the raw response body to see what you're getting
+    // Log the raw response body to see what you're getting from Make.com
     console.log("Raw response from Make.com:", response.data);
-    
-    // Check if Make.com returned a summary or handle other responses accordingly
+
+    // Return the summary or success message from Make.com
     return res.json({ summary: response.data.summary || "Sent successfully" });
   } catch (err) {
     console.error("Error sending to Make.com:", err);
 
-    // Log more detailed error response
+    // Log more detailed error response if available
     if (err.response) {
       console.error("Error response data:", err.response.data);
       console.error("Error response status:", err.response.status);
