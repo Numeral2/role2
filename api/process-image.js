@@ -1,7 +1,17 @@
-const formidable = require("formidable");
 const Tesseract = require("tesseract.js");
+const formidable = require("formidable");
 
 module.exports = async (req, res) => {
+  // CORS Headers
+  res.setHeader("Access-Control-Allow-Origin", "*"); // You can replace "*" with the specific frontend URL for security
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  // Handle OPTIONS requests (pre-flight request for CORS)
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -16,29 +26,25 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: "Failed to process form" });
     }
 
-    const uploadedFile = files.file; // Assuming the field name is 'file'
-
-    if (!uploadedFile || !uploadedFile.path) {
-      return res.status(400).json({ error: "File not found in request" });
+    const filesArray = Object.values(files);
+    if (filesArray.length === 0) {
+      return res.status(400).json({ error: "No files uploaded" });
     }
 
     try {
-      // Perform OCR on the uploaded file using Tesseract
       let extractedText = "";
-      const result = await Tesseract.recognize(uploadedFile.path, "eng", {
-        logger: (m) => console.log(m),
-      });
+      for (const file of filesArray) {
+        const result = await Tesseract.recognize(file.path, "eng", {
+          logger: (m) => console.log(m),
+        });
+        extractedText += result.data.text + "\n\n";
+      }
 
-      extractedText += result.data.text;
-
-      // Send the extracted text to the next API for Make.com processing
-      const makeUrl = "https://role2-9x6u.vercel.app/api/send-to-make"; // The next API endpoint for sending to Make.com
-      const response = await axios.post(makeUrl, { text: extractedText });
-
-      return res.json({ summary: response.data.summary || "Sent successfully" });
+      return res.json({ extracted_text: extractedText });
     } catch (err) {
-      console.error("OCR error:", err);
-      return res.status(500).json({ error: "Failed to process OCR or send to Make.com" });
+      console.error("OCR processing error:", err);
+      return res.status(500).json({ error: "Error processing files" });
     }
   });
 };
+
