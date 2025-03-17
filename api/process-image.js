@@ -1,4 +1,4 @@
-const formidable = require("formidable");
+const formidable = require("formidable"); 
 const Tesseract = require("tesseract.js");
 
 module.exports = async (req, res) => {
@@ -16,6 +16,9 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: "Failed to process form" });
     }
 
+    // Log incoming file details
+    console.log("Received files:", files);
+
     const filesArray = Object.values(files);
     if (filesArray.length === 0) {
       return res.status(400).json({ error: "No files uploaded" });
@@ -24,6 +27,14 @@ module.exports = async (req, res) => {
     try {
       let extractedText = "";
       for (const file of filesArray) {
+        console.log("Processing file:", file.path);
+
+        // Check if file exists at the given path
+        const fs = require("fs");
+        if (!fs.existsSync(file.path)) {
+          return res.status(400).json({ error: `File ${file.path} not found` });
+        }
+
         const result = await Tesseract.recognize(file.path, "eng", {
           logger: (m) => console.log(m),
         });
