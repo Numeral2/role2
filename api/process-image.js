@@ -1,4 +1,4 @@
-const formidable = require("formidable"); 
+const formidable = require("formidable");
 const Tesseract = require("tesseract.js");
 
 module.exports = async (req, res) => {
@@ -16,35 +16,29 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: "Failed to process form" });
     }
 
-    // Log incoming file details
-    console.log("Received files:", files);
+    const uploadedFile = files.file; // Assuming the field name is 'file'
 
-    const filesArray = Object.values(files);
-    if (filesArray.length === 0) {
-      return res.status(400).json({ error: "No files uploaded" });
+    if (!uploadedFile || !uploadedFile.path) {
+      return res.status(400).json({ error: "File not found in request" });
     }
 
     try {
+      // Perform OCR on the uploaded file using Tesseract
       let extractedText = "";
-      for (const file of filesArray) {
-        console.log("Processing file:", file.path);
+      const result = await Tesseract.recognize(uploadedFile.path, "eng", {
+        logger: (m) => console.log(m),
+      });
 
-        // Check if file exists at the given path
-        const fs = require("fs");
-        if (!fs.existsSync(file.path)) {
-          return res.status(400).json({ error: `File ${file.path} not found` });
-        }
+      extractedText += result.data.text;
 
-        const result = await Tesseract.recognize(file.path, "eng", {
-          logger: (m) => console.log(m),
-        });
-        extractedText += result.data.text + "\n\n";
-      }
+      // Send the extracted text to the next API for Make.com processing
+      const makeUrl = "https://role2-9x6u.vercel.app/api/send-to-make"; // The next API endpoint for sending to Make.com
+      const response = await axios.post(makeUrl, { text: extractedText });
 
-      return res.json({ extracted_text: extractedText });
+      return res.json({ summary: response.data.summary || "Sent successfully" });
     } catch (err) {
-      console.error("OCR processing error:", err);
-      return res.status(500).json({ error: "Error processing files" });
+      console.error("OCR error:", err);
+      return res.status(500).json({ error: "Failed to process OCR or send to Make.com" });
     }
   });
 };
