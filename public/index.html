@@ -1,160 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Text Extraction (OCR)</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        h1 {
-            text-align: center;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-        input[type="file"] {
-            margin: 20px 0;
-        }
-        .drop-zone {
-            border: 2px dashed #ccc;
-            padding: 20px;
-            text-align: center;
-            margin-top: 10px;
-            cursor: pointer;
-            border-radius: 8px;
-            background-color: #fafafa;
-        }
-        .drop-zone.dragover {
-            background-color: #e3f2fd;
-        }
-        button {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .result {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #e2e2e2;
-            border-radius: 8px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-family: "Courier New", monospace;
-        }
-        #send-to-make {
-            display: none;
-            margin-top: 10px;
-            background-color: #007bff;
-        }
-        #send-to-make:hover {
-            background-color: #0056b3;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload File for OCR</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      text-align: center;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    input[type="file"] {
+      margin: 20px 0;
+    }
+    button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #e2e2e2;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-family: "Courier New", monospace;
+    }
+    #send-to-make {
+      display: none;
+      margin-top: 10px;
+      background-color: #007bff;
+    }
+    #send-to-make:hover {
+      background-color: #0056b3;
+    }
+    #error-message {
+      color: red;
+      display: none;
+    }
+  </style>
 </head>
 <body>
-    <h1>Upload or Drag & Drop Images for Text Extraction</h1>
-    <div class="container">
-        <form id="upload-form" enctype="multipart/form-data">
-            <input type="file" name="files" id="files" accept="image/*" multiple required>
-            <div class="drop-zone" id="drop-zone">Drag & Drop images here</div>
-            <button type="submit">Upload and Extract Text</button>
-        </form>
-        <div class="result" id="extracted-text" style="display: none;"></div>
-        <button id="send-to-make">Send to Make.com</button>
-        <div id="error-message" style="color: red; display: none;"></div>
-    </div>
+  <h1>Upload File for OCR</h1>
 
-    <script>
-        let extractedText = "";
+  <div class="container">
+    <!-- File input to choose the image file -->
+    <input type="file" id="fileInput" name="file" accept="image/*" />
+    <!-- Button to trigger the file upload -->
+    <button id="submitButton">Upload and Process</button>
 
-        document.getElementById("upload-form").addEventListener("submit", async function(event) {
-            event.preventDefault();
-            let formData = new FormData();
-            let files = document.getElementById("files").files;
-            
-            for (let i = 0; i < files.length; i++) {
-                formData.append("files", files[i]);
-            }
+    <!-- Display OCR result and option to send to Make.com -->
+    <div class="result" id="extracted-text" style="display: none;"></div>
+    <button id="send-to-make">Send to Make.com</button>
+    <div id="error-message"></div>
+  </div>
 
-            try {
-                let response = await fetch("/api/process-image", {  // ✅ UPDATED API PATH
-                    method: "POST",
-                    body: formData
-                });
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    const fileInput = document.getElementById("fileInput");
+    const submitButton = document.getElementById("submitButton");
+    const sendToMakeButton = document.getElementById("send-to-make");
+    const extractedTextDiv = document.getElementById("extracted-text");
+    const errorMessageDiv = document.getElementById("error-message");
 
-                let data = await response.json();
+    let extractedText = ""; // Store the extracted text for later use
 
-                if (response.ok) {
-                    extractedText = data.extracted_text;
-                    document.getElementById("extracted-text").style.display = "block";
-                    document.getElementById("extracted-text").textContent = extractedText;
-                    document.getElementById("send-to-make").style.display = "block";
-                    document.getElementById("error-message").style.display = "none";
-                } else {
-                    throw new Error(data.error || "Unknown error");
-                }
-            } catch (error) {
-                document.getElementById("error-message").style.display = "block";
-                document.getElementById("error-message").textContent = "Error: " + error.message;
-                document.getElementById("extracted-text").style.display = "none";
-                document.getElementById("send-to-make").style.display = "none";
-            }
+    submitButton.addEventListener("click", async () => {
+      const selectedFile = fileInput.files[0]; // Get the selected file
+
+      if (!selectedFile) {
+        alert("Please select a file to upload.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", selectedFile); // 'file' should match the field name in the server code
+
+      try {
+        // Send the file to the server for OCR processing using Axios
+        const response = await axios.post("https://role2-9x6u.vercel.app/api/process-image", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data", // Ensure the correct content type is set
+          },
         });
 
-        document.getElementById("send-to-make").addEventListener("click", async function() {
-            if (!extractedText) return;
+        console.log("OCR response:", response.data);
+        extractedText = response.data.extracted_text || ""; // Save extracted text
+        extractedTextDiv.style.display = "block";
+        extractedTextDiv.textContent = extractedText;
+        sendToMakeButton.style.display = "block";
+        errorMessageDiv.style.display = "none";
+      } catch (error) {
+        console.error("Error:", error.response ? error.response.data : error.message);
+        errorMessageDiv.style.display = "block";
+        errorMessageDiv.textContent = "Failed to upload or process the file.";
+        extractedTextDiv.style.display = "none";
+        sendToMakeButton.style.display = "none";
+      }
+    });
 
-            try {
-                let response = await fetch("/api/send-to-make", {  // ✅ UPDATED API PATH
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ text: extractedText })
-                });
+    sendToMakeButton.addEventListener("click", async () => {
+      if (!extractedText) return;
 
-                let data = await response.json();
-
-                if (response.ok) {
-                    alert("Text successfully sent to Make.com!");
-                } else {
-                    throw new Error(data.error || "Failed to send to Make.com");
-                }
-            } catch (error) {
-                alert("Error sending to Make.com: " + error.message);
-            }
+      try {
+        // Send the extracted text to Make.com using Axios
+        const response = await axios.post("/api/send-to-make", {
+          text: extractedText
         });
 
-        const dropZone = document.getElementById("drop-zone");
-        dropZone.addEventListener("dragover", (event) => {
-            event.preventDefault();
-            dropZone.classList.add("dragover");
-        });
-        dropZone.addEventListener("dragleave", () => {
-            dropZone.classList.remove("dragover");
-        });
-        dropZone.addEventListener("drop", (event) => {
-            event.preventDefault();
-            dropZone.classList.remove("dragover");
-            document.getElementById("files").files = event.dataTransfer.files;
-        });
-    </script>
+        if (response.data.success) {
+          alert("Text successfully sent to Make.com!");
+        } else {
+          throw new Error(response.data.error || "Failed to send to Make.com");
+        }
+      } catch (error) {
+        alert("Error sending to Make.com: " + error.message);
+      }
+    });
+  </script>
 </body>
 </html>
