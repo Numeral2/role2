@@ -3,7 +3,7 @@ const formidable = require("formidable");
 
 module.exports = async (req, res) => {
   // Set CORS headers to allow requests from any domain (you can restrict this later if needed)
-  res.setHeader("Access-Control-Allow-Origin", "https://role2-fu9l.vercel.app/"); // Replace "*" with your frontend domain if you want to restrict access
+  res.setHeader("Access-Control-Allow-Origin", "https://role2-u1b3.vercel.app/"); // Replace "*" with your frontend domain if you want to restrict access
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
