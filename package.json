@@ -19,7 +19,7 @@
     "vercel": "^23.0.0"
   },
   "engines": {
-    "node": "14.x"
+    "node": "22.x"
   },
   "author": "",
   "license": "ISC"
